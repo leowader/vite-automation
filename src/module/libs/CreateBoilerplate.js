@@ -3,7 +3,7 @@ const fs = require("fs");
 const projectName = "demo";
 const directory = "projects";
 const comando = `npm create vite@latest ${projectName}`;
-const { structureReact } = require("./src/Arquitecture");
+const { structureReact } = require("./Arquitecture");
 // Ejecutar el comando
 const proceso = spawn(comando, { cwd: directory, shell: true });
 let seleccionado = false;
