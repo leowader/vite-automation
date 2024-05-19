@@ -1,9 +1,16 @@
 import express from "express";
 import { Octokit } from "@octokit/rest";
 import axios from "axios";
+import cors from "cors";
 import { crearRepo } from "./module/libs/CreateRepository.js";
-const app = express();
 const PORT = process.env.PORT || 4000;
+const app = express();
+app.use(
+  cors({
+    origin: ["http://localhost:5173"],
+    credentials: true,
+  })
+);
 app.use(express.json());
 app.listen(PORT, () => {
   console.log(`Server runing on http://localhost:${PORT} `);
@@ -13,9 +20,11 @@ app.get("/", (__req, res) => {
 });
 app.get("/login", (req, res) => {
   const clientId = process.env.CLIENT_ID;
-  const redirectUri = `http://localhost:${PORT}/home`;
+  const redirectUri = `http://localhost:5173`;
   const githubAuthUrl = `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&scope=repo`;
-  res.redirect(githubAuthUrl);
+  res.send({ url: githubAuthUrl });
+
+  // res.redirect(githubAuthUrl);
 });
 app.get("/home", async (req, res) => {
   const { code } = req.query;
@@ -38,10 +47,7 @@ app.get("/home", async (req, res) => {
       }
     );
     const accessToken = response.data.access_token;
-    console.log("TOKEN ", accessToken);
-    const octokit = new Octokit({ auth: accessToken });
-    const respuesta = await crearRepo("funciona", octokit);
-    res.send({ data: respuesta });
+    res.send({ accessToken: accessToken });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -50,7 +56,9 @@ app.post("/create-repo", async (req, res) => {
   const { repoName, accessToken } = req.body;
 
   if (!repoName || !accessToken) {
-    return res.status(400).json({ error: "repoName and accessToken are required" });
+    return res
+      .status(400)
+      .json({ error: "repoName and accessToken are required" });
   }
   if (!accessToken) {
     return res.status(401).json({ error: "Unauthorized" });
